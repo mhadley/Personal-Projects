@@ -1,0 +1,37 @@
+{
+  "_note": "movement = one row per movement system; hooks = every place the mod touches the game; probes = the go/no-go tests that decide whether a movement row can be built. 'refs' must resolve to a row id in weapons.json or movement. 'needs_probe' on a movement row must resolve to a probes row. null = unfilled cell; a probe's 'result' stays null until run in the real game. Scope decision (user): v0.1 = gunplay + lean + sprint; if the sprint probe fails, ship lean + gunplay only.",
+  "movement": {
+    "columns": ["id", "trigger", "speed_mult", "stamina_max", "drain_per_s", "regen_per_s", "regen_delay_s", "min_to_start", "lean_angle_deg", "lean_offset_units", "lean_in_time_s", "applies_to", "route", "needs_probe", "fallback", "verified"],
+    "rows": [
+      {"id": "sprint", "trigger": "hold sprint key (key binding to be confirmed; Shift is walk by default)", "speed_mult": 1.35, "stamina_max": 100, "drain_per_s": 25, "regen_per_s": 15, "regen_delay_s": 1.5, "min_to_start": 20, "lean_angle_deg": "n/a", "lean_offset_units": "n/a", "lean_in_time_s": "n/a", "applies_to": "human survivors incl. player; bots unchanged in v0.1", "route": "VScript think function adjusting player speed (to verify)", "needs_probe": "p_speed", "fallback": "drop sprint from v0.1 (SourceMod is not installed by Melty)", "verified": false},
+      {"id": "lean", "trigger": "hold lean-left / lean-right keys (keys to be confirmed against L4D2 defaults)", "speed_mult": "n/a", "stamina_max": "n/a", "drain_per_s": "n/a", "regen_per_s": "n/a", "regen_delay_s": "n/a", "min_to_start": "n/a", "lean_angle_deg": 12, "lean_offset_units": 14, "lean_in_time_s": 0.15, "applies_to": "the local player; bots do not lean", "route": "VScript or console-bind approach to shift view roll and offset (to verify, no native lean in L4D2)", "needs_probe": "p_lean", "fallback": "none: lean is a must-have, so a failed probe goes back to the user", "verified": false}
+    ]
+  },
+  "weapon_feel": {
+    "columns": ["id", "what", "setting_or_file", "value", "needs_probe", "verified"],
+    "rows": [
+      {"id": "viewmodel_sway", "what": "arm and weapon sway while moving and turning (SCP: 5K feel)", "setting_or_file": null, "value": null, "needs_probe": "p_viewmodel", "verified": false}
+    ]
+  },
+  "probes": {
+    "columns": ["id", "question", "how", "pass_means", "result"],
+    "rows": [
+      {"id": "p_weapon_override", "question": "Does a weapon script in an addon VPK change the weapon's stats in game?", "how": "ship weapon_pistol.txt with a clearly different clip size, read it back in game", "pass_means": "tac_* rows are buildable as addon scripts", "result": null},
+      {"id": "p_speed", "question": "Can VScript change a survivor's move speed past the default?", "how": "VScript think function, read the speed back with the console", "pass_means": "sprint is buildable", "result": null},
+      {"id": "p_lean", "question": "What produces a lean (view roll plus sideways shift) without SourceMod?", "how": "try VScript, then console binds; judge by how it looks in first person", "pass_means": "lean_* columns are buildable", "result": null},
+      {"id": "p_viewmodel", "question": "Which viewmodel sway or bob settings can an addon change?", "how": "list the viewmodel cvars/scripts the game exposes and try them", "pass_means": "viewmodel_sway row can be filled", "result": null}
+    ]
+  },
+  "hooks": {
+    "columns": ["id", "what", "mechanism", "refs", "ships_in_package", "verified"],
+    "rows": [
+      {"id": "weapon_scripts", "what": "override weapon stats and recoil", "mechanism": "addon script files", "refs": ["tac_rifle", "tac_smg", "tac_shotgun", "tac_pistol"], "ships_in_package": true, "verified": false},
+      {"id": "sprint_think",   "what": "per-tick stamina and speed control on survivors", "mechanism": "VScript", "refs": ["sprint"], "ships_in_package": true, "verified": false},
+      {"id": "hud_stamina",    "what": "show a stamina readout", "mechanism": "VScript HUD or simple text hint (to decide)", "refs": ["sprint"], "ships_in_package": true, "verified": false},
+      {"id": "lean_think",     "what": "read lean keys and apply the lean each tick", "mechanism": "VScript plus key binds (to verify)", "refs": ["lean"], "ships_in_package": true, "verified": false},
+      {"id": "sway_settings",  "what": "apply arm and weapon sway settings", "mechanism": "to decide after p_viewmodel", "refs": ["viewmodel_sway"], "ships_in_package": true, "verified": false},
+      {"id": "bot_behavior",   "what": "check bots cope with changed speeds and recoil", "mechanism": "test only, no code in v0.1", "refs": [], "ships_in_package": false, "verified": false},
+      {"id": "install_path",   "what": "package goes in {game}/left4dead2/addons", "mechanism": "Melty recipe", "refs": [], "ships_in_package": true, "verified": false}
+    ]
+  }
+}
